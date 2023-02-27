@@ -1,22 +1,27 @@
-﻿namespace PCLazyLocker;
+﻿using System.Collections.ObjectModel;
+
+namespace PCLazyLocker;
 
 internal class Program
 {
     static async Task Main(string[] args)
     {
         var keysAliases = GetKeysAliases();
-        var cts = new CancellationTokenSource();
+        var keysCombination = GetKeysCombination();
 
-        await KeyboardManager.SetKeysCombination(
-                new Keys[] { Keys.ControlKey, Keys.Menu, Keys.Escape },
-                () => Console.WriteLine("pressed"), 
-                cts.Token,
-                keysAliases);
+        var pcLocker = new PCLocker(keysCombination, keysAliases);
+        await pcLocker.StartPollingAsync();
 
         Wait();
     }
 
-    private static IReadOnlyDictionary<Keys, Keys> GetKeysAliases()
+    private static ReadOnlyCollection<Keys> GetKeysCombination()
+    {
+        return new Keys[] { Keys.ControlKey, Keys.Menu, Keys.Escape }
+                .AsReadOnly();
+    }
+
+    private static ReadOnlyDictionary<Keys, Keys> GetKeysAliases()
     {
         return new Dictionary<Keys, Keys>
         {
@@ -26,8 +31,7 @@ internal class Program
             { Keys.RControlKey, Keys.ControlKey },
             { Keys.LShiftKey, Keys.ShiftKey },
             { Keys.RShiftKey, Keys.ShiftKey },
-        }
-        .AsReadOnly();
+        }.AsReadOnly();
     }
 
     private static void Wait()
