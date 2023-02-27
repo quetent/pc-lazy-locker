@@ -70,8 +70,7 @@ public class LazyLocker
         {
             if (_isLocked)
             {
-                //NativeMethods.LockPC();
-                Console.WriteLine("pc locked");
+                NativeMethods.LockPC();
                 _isLocked.Switch();
             }
         }
