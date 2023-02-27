@@ -2,7 +2,8 @@
 
 public static class MouseManager
 {
-    public delegate void MouseEventHandler(Keys key);
+    public delegate void MousePressedHandler(Keys key);
+    public static event MousePressedHandler? MousePressed;
 
     public delegate void CursorPositionChangedHandle(double distance);
     public static event CursorPositionChangedHandle? CursorPositionChanged;
@@ -23,9 +24,6 @@ public static class MouseManager
                 var (dx, dy) = (x - previousX, y - previousY);
                 var distance = Math.Sqrt(dx * dx + dy * dy);
 
-                //Thread.Sleep(250);
-                Console.WriteLine(distance);
-
                 (previousX, previousY) = (x, y);
 
                 if (distance > 0)
@@ -33,5 +31,25 @@ public static class MouseManager
             }
         });
 #pragma warning restore CS4014 // call is not awaited
+    }
+
+#pragma warning disable CS1998 // async method lacks await
+    public static async Task MousePressedStartMonitoringAsync()
+#pragma warning restore CS1998 // async method lacks await
+    {
+        InputKeysMonitor.KeyPressed += (Keys pressedKey) =>
+        {
+            if (IsMouseKey(pressedKey))
+                MousePressed?.Invoke(pressedKey);
+        };
+    }
+
+    public static bool IsMouseKey(Keys key)
+    {
+        return key is Keys.LButton
+            || key is Keys.RButton
+            || key is Keys.MButton
+            || key is Keys.XButton1
+            || key is Keys.XButton2;
     }
 }

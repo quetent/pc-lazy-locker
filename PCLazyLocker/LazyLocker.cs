@@ -20,37 +20,48 @@ public class LazyLocker
     }
 
 #pragma warning disable CS1998 // async method lacks await
-    public async Task Start()
+    public async Task WaitLockAsync()
 #pragma warning restore CS1998 // async method lacks await
     {
 #pragma warning disable CS4014 // call is not awaited
         InputKeysMonitor.StartMonitoringAsync(_keysAliases);
 
-        MouseManager.CursorPositionChanged += CursorChangedPositionHandle;
-        MouseManager.CursorMovingStartMonitoringAsync();
-
-        var keysCombination = new KeysCombination(_keysCombination, () => _isLocked.Switch());
+        var keysCombination = new KeysCombination(_keysCombination, () => _isLocked.Switch(), MissedKeyPressedHandler);
         keysCombination.StartMonitoringAsync();
 
+        MouseManager.MousePressed += MouseButtonPressedHandler;
+        MouseManager.MousePressedStartMonitoringAsync();
 
+        MouseManager.CursorPositionChanged += CursorPositionChangedHandle;
+        MouseManager.CursorMovingStartMonitoringAsync();
 #pragma warning restore CS4014 // call is not awaited
     }
 
-    private void A()
+    private void MouseButtonPressedHandler(Keys _)
     {
-
+        if (_isLocked)
+            LockPC();
     }
 
-    private void CursorChangedPositionHandle(double distance)
+    private void MissedKeyPressedHandler()
     {
-        if (distance > 2)
+        if (_isLocked)
+            LockPC();
+    }
+
+    private void CursorPositionChangedHandle(double distance)
+    {
+        if (_isLocked && distance > 2)
             LockPC();
     }
 
     private void LockPC()
     {
-        //NativeMethods.LockPC();
         if (_isLocked)
+        {
+            //NativeMethods.LockPC();
             Console.WriteLine("pc locked");
+            _isLocked.Switch();
+        }
     }
 }

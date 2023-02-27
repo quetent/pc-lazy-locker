@@ -8,6 +8,10 @@ public class Config
     {
         return new Dictionary<Keys, Keys>
         {
+            { Keys.MButton, Keys.LButton },
+            { Keys.RButton, Keys.LButton },
+            { Keys.XButton1, Keys.LButton },
+            { Keys.XButton2, Keys.LButton },
             { Keys.LMenu, Keys.Menu },
             { Keys.RMenu, Keys.Menu },
             { Keys.LControlKey, Keys.ControlKey},

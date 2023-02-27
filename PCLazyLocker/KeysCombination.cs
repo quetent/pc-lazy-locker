@@ -8,13 +8,18 @@ public class KeysCombination
 
     private int _keyAwaitingIndex = 0;
 
-    private readonly Action _handler;
     private readonly ReadOnlyCollection<Keys> _keysCombination;
+    private readonly Action _combinationPressedHandler;
+    private readonly Action? _missedKeyHandler;
 
-    public KeysCombination(ReadOnlyCollection<Keys> keys, Action handler)
+    public KeysCombination(
+        ReadOnlyCollection<Keys> keys,
+        Action combinationPressedHandler,
+        Action? missedKeyHandler = null)
     {
         _keysCombination = keys;
-        _handler = handler;
+        _combinationPressedHandler = combinationPressedHandler;
+        _missedKeyHandler = missedKeyHandler;
     }
 
 #pragma warning disable CS1998 // async method lacks await 
@@ -28,20 +33,24 @@ public class KeysCombination
         {
             while (true)
                 if (IsCombinationPressed())
-                    _handler.Invoke();
+                    _combinationPressedHandler.Invoke();
         });
 #pragma warning restore CS4014 // call is not awaited
     }
 
     private void CheckPressedKey(Keys pressedKey)
     {
-        if (pressedKey == _previousKey)
+        if (!InputKeysMonitor.IsKeyboardKey(pressedKey)
+         || pressedKey == _previousKey)
             return;
 
         if (pressedKey == _keysCombination[_keyAwaitingIndex])
             _keyAwaitingIndex++;
         else
+        {
             _keyAwaitingIndex = 0;
+            _missedKeyHandler?.Invoke();
+        }
 
         _previousKey = pressedKey;
     }

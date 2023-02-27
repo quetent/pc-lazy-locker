@@ -11,7 +11,7 @@ internal class Program
 
         var lazyLocker = new LazyLocker(keysCombination, keysAliases);
 #pragma warning disable CS4014 // call is not awaited
-        lazyLocker.Start();
+        lazyLocker.WaitLockAsync();
 #pragma warning restore CS4014 // call is not awaited
 
         Wait();

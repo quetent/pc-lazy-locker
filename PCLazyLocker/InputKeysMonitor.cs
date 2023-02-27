@@ -35,6 +35,11 @@ public static class InputKeysMonitor
 #pragma warning restore CS4014 // call is not awaited
     }
 
+    public static bool IsKeyboardKey(Keys key)
+    {
+        return !MouseManager.IsMouseKey(key);
+    }
+
     private static bool IsUserInput(int keyState)
     {
         return keyState == 1 || keyState == 32769;
