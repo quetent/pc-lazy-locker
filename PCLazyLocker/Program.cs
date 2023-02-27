@@ -1,37 +1,20 @@
-﻿using System.Collections.ObjectModel;
-
-namespace PCLazyLocker;
+﻿namespace PCLazyLocker;
 
 internal class Program
 {
+#pragma warning disable CS1998 // async method lacks await
     static async Task Main(string[] args)
+#pragma warning restore CS1998 // async method lacks await
     {
-        var keysAliases = GetKeysAliases();
-        var keysCombination = GetKeysCombination();
+        var keysCombination = Config.GetKeysCombination();
+        var keysAliases = Config.GetKeysAliases();
 
-        var pcLocker = new PCLocker(keysCombination, keysAliases);
-        await pcLocker.StartPollingAsync();
+        var lazyLocker = new LazyLocker(keysCombination, keysAliases);
+#pragma warning disable CS4014 // call is not awaited
+        lazyLocker.Start();
+#pragma warning restore CS4014 // call is not awaited
 
         Wait();
-    }
-
-    private static ReadOnlyCollection<Keys> GetKeysCombination()
-    {
-        return new Keys[] { Keys.ControlKey, Keys.Menu, Keys.Escape }
-                .AsReadOnly();
-    }
-
-    private static ReadOnlyDictionary<Keys, Keys> GetKeysAliases()
-    {
-        return new Dictionary<Keys, Keys>
-        {
-            { Keys.LMenu, Keys.Menu },
-            { Keys.RMenu, Keys.Menu },
-            { Keys.LControlKey, Keys.ControlKey},
-            { Keys.RControlKey, Keys.ControlKey },
-            { Keys.LShiftKey, Keys.ShiftKey },
-            { Keys.RShiftKey, Keys.ShiftKey },
-        }.AsReadOnly();
     }
 
     private static void Wait()
