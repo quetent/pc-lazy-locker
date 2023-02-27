@@ -26,8 +26,8 @@ public class LazyLocker
 #pragma warning disable CS4014 // call is not awaited
         InputKeysMonitor.StartMonitoringAsync(_keysAliases);
 
-        var keysCombination = new KeysCombination(_keysCombination, () => _isLocked.Switch(), MissedKeyPressedHandler);
-        keysCombination.StartMonitoringAsync();
+        new KeysCombination(_keysCombination, () => _isLocked.Switch(), MissedKeyPressedHandler)
+                .StartMonitoringAsync();
 
         MouseManager.MousePressed += MouseButtonPressedHandler;
         MouseManager.MousePressedStartMonitoringAsync();
