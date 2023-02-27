@@ -28,6 +28,8 @@ public static class MouseManager
 
                 if (distance > 0)
                     CursorPositionChanged?.Invoke(distance);
+
+                Thread.Sleep(Config.POLLING_FREQUENCY_MS);
             }
         });
 #pragma warning restore CS4014 // call is not awaited

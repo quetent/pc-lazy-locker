@@ -2,8 +2,10 @@
 
 namespace PCLazyLocker;
 
-public class Config
+public static class Config
 {
+    public const int POLLING_FREQUENCY_MS = 450;
+
     public static ReadOnlyDictionary<Keys, Keys> GetKeysAliases()
     {
         return new Dictionary<Keys, Keys>

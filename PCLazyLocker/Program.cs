@@ -3,7 +3,7 @@
 internal class Program
 {
 #pragma warning disable CS1998 // async method lacks await
-    static async Task Main(string[] args)
+    static async Task Main()
 #pragma warning restore CS1998 // async method lacks await
     {
         var keysCombination = Config.GetKeysCombination();

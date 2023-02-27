@@ -34,16 +34,19 @@ public class LazyLocker
 
         MouseManager.CursorPositionChanged += CursorPositionChangedHandle;
         MouseManager.CursorMovingStartMonitoringAsync();
+
+        UsbDevicesManager.DevicesCountChanged += UsbDevicesCountChanged;
+        UsbDevicesManager.DevicesCountChangingStartMonitoringAsync();
 #pragma warning restore CS4014 // call is not awaited
     }
 
-    private void MouseButtonPressedHandler(Keys _)
+    private void MissedKeyPressedHandler()
     {
         if (_isLocked)
             LockPC();
     }
 
-    private void MissedKeyPressedHandler()
+    private void MouseButtonPressedHandler(Keys _)
     {
         if (_isLocked)
             LockPC();
@@ -55,13 +58,22 @@ public class LazyLocker
             LockPC();
     }
 
-    private void LockPC()
+    private void UsbDevicesCountChanged()
     {
         if (_isLocked)
+            LockPC();
+    }
+
+    private void LockPC()
+    {
+        lock (this)
         {
-            //NativeMethods.LockPC();
-            Console.WriteLine("pc locked");
-            _isLocked.Switch();
+            if (_isLocked)
+            {
+                //NativeMethods.LockPC();
+                Console.WriteLine("pc locked");
+                _isLocked.Switch();
+            }
         }
     }
 }
