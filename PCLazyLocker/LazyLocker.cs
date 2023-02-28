@@ -6,7 +6,7 @@ public class LazyLocker
 {
     private bool _isLocked;
 
-    private readonly ReadOnlyCollection<Keys> _keysCombination;
+    private readonly KeysCombination _keysCombination;
     private readonly ReadOnlyDictionary<Keys, Keys>? _keysAliases;
 
     public LazyLocker(
@@ -15,63 +15,93 @@ public class LazyLocker
     {
         _isLocked = false;
 
-        _keysCombination = keysCombination;
+        _keysCombination = new KeysCombination(keysCombination, KeyCombinationPressedHandler, MissedKeyPressedHandler);
         _keysAliases = keysAliases;
     }
 
-#pragma warning disable CS1998 // async method lacks await
+#pragma warning disable CS1998
     public async Task WaitLockAsync()
-#pragma warning restore CS1998 // async method lacks await
+#pragma warning restore CS1998
     {
-#pragma warning disable CS4014 // call is not awaited
-        InputKeysMonitor.StartMonitoringAsync(_keysAliases);
-
-        new KeysCombination(_keysCombination, () => _isLocked.Switch(), MissedKeyPressedHandler)
-                .StartMonitoringAsync();
-
+#pragma warning disable CS4014
         MouseManager.MousePressed += MouseButtonPressedHandler;
-        MouseManager.MousePressedStartMonitoringAsync();
-
         MouseManager.CursorPositionChanged += CursorPositionChangedHandle;
-        MouseManager.CursorMovingStartMonitoringAsync();
-
         UsbDevicesManager.DevicesCountChanged += UsbDevicesCountChanged;
+
+        InputKeysMonitor.StartMonitoringAsync(_keysAliases);
+        _keysCombination.StartMonitoringAsync();
+#pragma warning restore CS4014
+    }
+
+#pragma warning disable CS1998
+    private static async Task StartMonitoringDevices()
+#pragma warning restore CS1998
+    {
+#pragma warning disable CS4014
+        MouseManager.MouseButtonsPressedStartMonitoringAsync();
+        MouseManager.CursorMovingStartMonitoringAsync();
         UsbDevicesManager.DevicesCountChangingStartMonitoringAsync();
-#pragma warning restore CS4014 // call is not awaited
+#pragma warning restore CS4014
+    }
+
+    private static void StopMonitoringDevices()
+    {
+        MouseManager.MouseButtonsPressedStopMonitoring();
+        MouseManager.CursorMovingStopMonitoring();
+        UsbDevicesManager.DevicesCountChangingStopMonitoring();
+    }
+
+    private async void KeyCombinationPressedHandler()
+    {
+        _isLocked.Switch();
+
+        if (!_isLocked)
+        {
+            NotificationManager.SendNotification("Lazy lock disable", string.Empty);
+            StopMonitoringDevices();
+        }
+        else
+        {
+            NotificationManager.SendNotification("Lazy lock enable", string.Empty);
+            await StartMonitoringDevices();
+        }
     }
 
     private void MissedKeyPressedHandler()
     {
         if (_isLocked)
-            LockPC();
+            LockPC(LockReason.KeyboardPress);
     }
 
-    private void MouseButtonPressedHandler(Keys _)
+    private void MouseButtonPressedHandler()
     {
         if (_isLocked)
-            LockPC();
+            LockPC(LockReason.MouseButtonPress);
     }
 
     private void CursorPositionChangedHandle(double distance)
     {
         if (_isLocked && distance > 2)
-            LockPC();
+            LockPC(LockReason.CursorMoving);
     }
 
     private void UsbDevicesCountChanged()
     {
         if (_isLocked)
-            LockPC();
+            LockPC(LockReason.UsbDeviceCountChanged);
     }
 
-    private void LockPC()
+    private void LockPC(LockReason reason)
     {
         lock (this)
         {
             if (_isLocked)
             {
-                NativeMethods.LockPC();
+                //NativeMethods.LockPC();
+                NotificationManager.SendNotification("PC was locked", $"Reason: {reason}");
+
                 _isLocked.Switch();
+                StopMonitoringDevices();
             }
         }
     }

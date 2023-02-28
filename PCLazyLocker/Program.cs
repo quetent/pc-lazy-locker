@@ -6,6 +6,7 @@ internal class Program
     static async Task Main()
 #pragma warning restore CS1998 // async method lacks await
     {
+
         var keysCombination = Config.GetKeysCombination();
         var keysAliases = Config.GetKeysAliases();
 

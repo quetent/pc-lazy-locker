@@ -2,17 +2,21 @@
 
 public static class MouseManager
 {
-    public delegate void MousePressedHandler(Keys key);
+    public delegate void MousePressedHandler();
     public static event MousePressedHandler? MousePressed;
 
     public delegate void CursorPositionChangedHandle(double distance);
     public static event CursorPositionChangedHandle? CursorPositionChanged;
 
-#pragma warning disable CS1998 // async method lacks await
+    private static CancellationTokenSource? _cursorMovingController;
+
+#pragma warning disable CS1998
     public static async Task CursorMovingStartMonitoringAsync()
-#pragma warning restore CS1998 // async method lacks await
+#pragma warning restore CS1998
     {
-#pragma warning disable CS4014 // call is not awaited
+#pragma warning disable CS4014
+        _cursorMovingController = new();
+
         Task.Run(() =>
         {
             var previousX = Cursor.Position.X;
@@ -20,6 +24,9 @@ public static class MouseManager
 
             while (true)
             {
+                if (CursorMovingStopRequested())
+                    return;
+
                 var (x, y) = (Cursor.Position.X, Cursor.Position.Y);
                 var (dx, dy) = (x - previousX, y - previousY);
                 var distance = Math.Sqrt(dx * dx + dy * dy);
@@ -29,29 +36,36 @@ public static class MouseManager
                 if (distance > 0)
                     CursorPositionChanged?.Invoke(distance);
 
-                Thread.Sleep(Config.POLLING_FREQUENCY_MS);
+                Thread.Sleep(Config.POLLING_DELAY_MS);
             }
         });
-#pragma warning restore CS4014 // call is not awaited
+#pragma warning restore CS4014
     }
 
-#pragma warning disable CS1998 // async method lacks await
-    public static async Task MousePressedStartMonitoringAsync()
-#pragma warning restore CS1998 // async method lacks await
+    public static void CursorMovingStopMonitoring()
     {
-        InputKeysMonitor.KeyPressed += (Keys pressedKey) =>
-        {
-            if (IsMouseKey(pressedKey))
-                MousePressed?.Invoke(pressedKey);
-        };
+        _cursorMovingController?.Cancel();
     }
 
-    public static bool IsMouseKey(Keys key)
+    private static bool CursorMovingStopRequested()
     {
-        return key is Keys.LButton
-            || key is Keys.RButton
-            || key is Keys.MButton
-            || key is Keys.XButton1
-            || key is Keys.XButton2;
+        return _cursorMovingController is not null
+            && _cursorMovingController.IsCancellationRequested;
+    }
+
+    public static void MouseButtonsPressedStartMonitoringAsync()
+    {
+        InputKeysMonitor.KeyPressed += MouseButtonPressedHandler;
+    }
+
+    public static void MouseButtonsPressedStopMonitoring()
+    {
+        InputKeysMonitor.KeyPressed -= MouseButtonPressedHandler;
+    }
+
+    private static void MouseButtonPressedHandler(Keys pressedKey)
+    {
+        if (InputKeysMonitor.IsMouseKey(pressedKey))
+            MousePressed?.Invoke();
     }
 }

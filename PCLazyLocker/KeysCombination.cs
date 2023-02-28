@@ -22,20 +22,24 @@ public class KeysCombination
         _missedKeyHandler = missedKeyHandler;
     }
 
-#pragma warning disable CS1998 // async method lacks await 
+#pragma warning disable CS1998
     public async Task StartMonitoringAsync()
     {
 #pragma warning restore CS1998
         InputKeysMonitor.KeyPressed += CheckPressedKey;
 
-#pragma warning disable CS4014 // call is not awaited
+#pragma warning disable CS4014
         Task.Run(() =>
         {
             while (true)
+            {
                 if (IsCombinationPressed())
                     _combinationPressedHandler.Invoke();
+
+                Thread.Sleep(Config.POLLING_DELAY_MS);
+            }
         });
-#pragma warning restore CS4014 // call is not awaited
+#pragma warning restore CS4014
     }
 
     private void CheckPressedKey(Keys pressedKey)

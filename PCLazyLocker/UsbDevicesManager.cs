@@ -9,14 +9,28 @@ public static class UsbDevicesManager
     public delegate void DevicesCountChangedHandle();
     public static event DevicesCountChangedHandle? DevicesCountChanged;
 
-    public static void DevicesCountChangingStartMonitoringAsync()
+    private static CancellationTokenSource? _connectedDevicesController;
+
+    static UsbDevicesManager()
     {
+        _devicesCount = GetConnectedDevicedCount();
+    }
+
+#pragma warning disable CS1998
+    public static async Task DevicesCountChangingStartMonitoringAsync()
+#pragma warning restore CS1998
+    {
+        _connectedDevicesController = new();
+
+#pragma warning disable CS4014
         Task.Run(() =>
         {
             while (true)
             {
-                using var searcher = new ManagementObjectSearcher(@"select * from Win32_USBHub");
-                var devicesCount = searcher.Get().Count;
+                if (DeviceCountChangingStopRequested())
+                    return;
+
+                var devicesCount = GetConnectedDevicedCount();
 
                 if (_devicesCount != devicesCount)
                 {
@@ -24,8 +38,28 @@ public static class UsbDevicesManager
                     _devicesCount = devicesCount;
                 }
 
-                Thread.Sleep(Config.POLLING_FREQUENCY_MS);
+                Thread.Sleep(Config.POLLING_DELAY_MS);
             };
         });
+#pragma warning restore CS4014
+    }
+
+    public static void DevicesCountChangingStopMonitoring()
+    {
+        _connectedDevicesController?.Cancel();
+    }
+
+    private static bool DeviceCountChangingStopRequested()
+    {
+        return _connectedDevicesController is not null
+            && _connectedDevicesController.IsCancellationRequested;
+    }
+
+    private static int GetConnectedDevicedCount()
+    {
+        using var searcher = new ManagementObjectSearcher(@"select * from Win32_USBHub");
+        using var devices = searcher.Get();
+
+        return devices.Count;
     }
 }
