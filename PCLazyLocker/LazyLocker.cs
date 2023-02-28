@@ -26,7 +26,6 @@ public class LazyLocker
 #pragma warning disable CS4014
         MouseMonitor.MousePressed += MouseButtonPressedHandle;
         MouseMonitor.CursorPositionChanged += CursorPositionChangedHandle;
-        UsbDeviceMonitor.DevicesCountChanged += UsbDevicesCountChangedHandle;
 
         InputKeysMonitor.StartMonitoringAsync(_keysAliases);
         _keysCombination.StartMonitoringAsync();
@@ -40,7 +39,6 @@ public class LazyLocker
 #pragma warning disable CS4014
         MouseMonitor.ButtonsPressedStartMonitoringAsync();
         MouseMonitor.CursorStartMonitoringAsync();
-        UsbDeviceMonitor.DevicesCountStartMonitoringAsync();
 #pragma warning restore CS4014
     }
 
@@ -48,7 +46,6 @@ public class LazyLocker
     {
         MouseMonitor.ButtonsPressedStopMonitoring();
         MouseMonitor.CursorMonitoringStop();
-        UsbDeviceMonitor.DevicesCountStopMonitoring();
     }
 
     private async void KeyCombinationPressedHandle()
@@ -83,12 +80,6 @@ public class LazyLocker
     {
         if (_isLocked && delta > 2)
             LockPC(LockReason.CursorMoving);
-    }
-
-    private void UsbDevicesCountChangedHandle()
-    {
-        if (_isLocked)
-            LockPC(LockReason.UsbDevicesCountChanged);
     }
 
     private void LockPC(LockReason reason)

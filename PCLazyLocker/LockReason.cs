@@ -5,5 +5,4 @@ public enum LockReason
     CursorMoving,
     KeyboardPress,
     MouseButtonPress,
-    UsbDevicesCountChanged,
 }
