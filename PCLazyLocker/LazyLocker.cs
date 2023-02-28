@@ -15,18 +15,18 @@ public class LazyLocker
     {
         _isLocked = false;
 
-        _keysCombination = new KeysCombination(keysCombination, KeyCombinationPressedHandler, MissedKeyPressedHandler);
+        _keysCombination = new KeysCombination(keysCombination, KeyCombinationPressedHandle, MissedKeyPressedHandle);
         _keysAliases = keysAliases;
     }
 
 #pragma warning disable CS1998
-    public async Task WaitLockAsync()
+    public async Task SetLockersAsync()
 #pragma warning restore CS1998
     {
 #pragma warning disable CS4014
-        MouseManager.MousePressed += MouseButtonPressedHandler;
-        MouseManager.CursorPositionChanged += CursorPositionChangedHandle;
-        UsbDevicesManager.DevicesCountChanged += UsbDevicesCountChanged;
+        MouseMonitor.MousePressed += MouseButtonPressedHandle;
+        MouseMonitor.CursorPositionChanged += CursorPositionChangedHandle;
+        UsbDeviceMonitor.DevicesCountChanged += UsbDevicesCountChangedHandle;
 
         InputKeysMonitor.StartMonitoringAsync(_keysAliases);
         _keysCombination.StartMonitoringAsync();
@@ -38,71 +38,68 @@ public class LazyLocker
 #pragma warning restore CS1998
     {
 #pragma warning disable CS4014
-        MouseManager.MouseButtonsPressedStartMonitoringAsync();
-        MouseManager.CursorMovingStartMonitoringAsync();
-        UsbDevicesManager.DevicesCountChangingStartMonitoringAsync();
+        MouseMonitor.ButtonsPressedStartMonitoringAsync();
+        MouseMonitor.CursorStartMonitoringAsync();
+        UsbDeviceMonitor.DevicesCountStartMonitoringAsync();
 #pragma warning restore CS4014
     }
 
     private static void StopMonitoringDevices()
     {
-        MouseManager.MouseButtonsPressedStopMonitoring();
-        MouseManager.CursorMovingStopMonitoring();
-        UsbDevicesManager.DevicesCountChangingStopMonitoring();
+        MouseMonitor.ButtonsPressedStopMonitoring();
+        MouseMonitor.CursorMonitoringStop();
+        UsbDeviceMonitor.DevicesCountStopMonitoring();
     }
 
-    private async void KeyCombinationPressedHandler()
+    private async void KeyCombinationPressedHandle()
     {
         _isLocked.Switch();
 
         if (!_isLocked)
         {
-            NotificationManager.SendNotification("Lazy lock disable", string.Empty);
             StopMonitoringDevices();
+            NotificationManager.SendNotification("Lazy lock disable", string.Empty);
         }
         else
         {
-            NotificationManager.SendNotification("Lazy lock enable", string.Empty);
             await StartMonitoringDevices();
+            NotificationManager.SendNotification("Lazy lock enable", string.Empty);
         }
     }
 
-    private void MissedKeyPressedHandler()
+    private void MissedKeyPressedHandle()
     {
         if (_isLocked)
             LockPC(LockReason.KeyboardPress);
     }
 
-    private void MouseButtonPressedHandler()
+    private void MouseButtonPressedHandle()
     {
         if (_isLocked)
             LockPC(LockReason.MouseButtonPress);
     }
 
-    private void CursorPositionChangedHandle(double distance)
+    private void CursorPositionChangedHandle(double delta)
     {
-        if (_isLocked && distance > 2)
+        if (_isLocked && delta > 2)
             LockPC(LockReason.CursorMoving);
     }
 
-    private void UsbDevicesCountChanged()
+    private void UsbDevicesCountChangedHandle()
     {
         if (_isLocked)
-            LockPC(LockReason.UsbDeviceCountChanged);
+            LockPC(LockReason.UsbDevicesCountChanged);
     }
 
     private void LockPC(LockReason reason)
     {
         lock (this)
         {
-            if (_isLocked)
-            {
-                //NativeMethods.LockPC();
-                NotificationManager.SendNotification("PC was locked", $"Reason: {reason}");
+            StopMonitoringDevices();
+            NativeMethods.LockPC();
 
-                _isLocked.Switch();
-                StopMonitoringDevices();
-            }
+            NotificationManager.SendNotification("PC was locked", $"Reason: {reason}");
+            _isLocked.Switch();
         }
     }
 }

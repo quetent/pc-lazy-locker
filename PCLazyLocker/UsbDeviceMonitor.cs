@@ -2,7 +2,7 @@
 
 namespace PCLazyLocker;
 
-public static class UsbDevicesManager
+public static class UsbDeviceMonitor
 {
     private static int _devicesCount;
 
@@ -11,13 +11,13 @@ public static class UsbDevicesManager
 
     private static CancellationTokenSource? _connectedDevicesController;
 
-    static UsbDevicesManager()
+    static UsbDeviceMonitor()
     {
-        _devicesCount = GetConnectedDevicedCount();
+        _devicesCount = GetConnectedDevicesCount();
     }
 
 #pragma warning disable CS1998
-    public static async Task DevicesCountChangingStartMonitoringAsync()
+    public static async Task DevicesCountStartMonitoringAsync()
 #pragma warning restore CS1998
     {
         _connectedDevicesController = new();
@@ -27,10 +27,10 @@ public static class UsbDevicesManager
         {
             while (true)
             {
-                if (DeviceCountChangingStopRequested())
+                if (CountMonitoringStopRequested())
                     return;
 
-                var devicesCount = GetConnectedDevicedCount();
+                var devicesCount = GetConnectedDevicesCount();
 
                 if (_devicesCount != devicesCount)
                 {
@@ -44,22 +44,21 @@ public static class UsbDevicesManager
 #pragma warning restore CS4014
     }
 
-    public static void DevicesCountChangingStopMonitoring()
+    public static void DevicesCountStopMonitoring()
     {
         _connectedDevicesController?.Cancel();
     }
 
-    private static bool DeviceCountChangingStopRequested()
+    private static bool CountMonitoringStopRequested()
     {
         return _connectedDevicesController is not null
             && _connectedDevicesController.IsCancellationRequested;
     }
 
-    private static int GetConnectedDevicedCount()
+    private static int GetConnectedDevicesCount()
     {
         using var searcher = new ManagementObjectSearcher(@"select * from Win32_USBHub");
-        using var devices = searcher.Get();
 
-        return devices.Count;
+        return searcher.Get().Count;
     }
 }

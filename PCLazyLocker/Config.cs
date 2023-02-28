@@ -4,7 +4,7 @@ namespace PCLazyLocker;
 
 public static class Config
 {
-    public const int POLLING_DELAY_MS = 150;
+    public const int POLLING_DELAY_MS = 100;
 
     public static ReadOnlyDictionary<Keys, Keys> GetKeysAliases()
     {
