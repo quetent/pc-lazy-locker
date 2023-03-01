@@ -86,11 +86,15 @@ public class LazyLocker
     {
         lock (this)
         {
-            StopMonitoringDevices();
-            NativeMethods.LockPC();
+            if (_isLocked)
+            {
+                StopMonitoringDevices();
+                NativeMethods.LockPC();
 
-            NotificationManager.SendNotification("PC was locked", $"Reason: {reason}");
-            _isLocked.Switch();
+                NotificationManager.SendNotification("PC was locked", $"Reason: {reason}");
+                _isLocked.Switch();
+
+            }
         }
     }
 }
